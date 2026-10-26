@@ -16,6 +16,7 @@ type HostInfo struct {
 	CPUCores      int
 	TotalMemory   uint64
 	RootDiskTotal uint64
+	Uptime        uint64
 }
 
 func (h *HostInfo) CheckInfo() error {
@@ -48,11 +49,22 @@ func (h *HostInfo) CheckInfo() error {
 	}
 	h.RootDiskTotal = disk
 
+	uptime, err := readUptime()
+	if err != nil {
+		return fmt.Errorf("read uptime: %w", err)
+	}
+	h.Uptime = uptime
+
 	return nil
 }
 
 func (h *HostInfo) Print() {
 	const gib = 1024 * 1024 * 1024
+
+	days := h.Uptime / 86400
+	hours := (h.Uptime % 86400) / 3600
+	minutes := (h.Uptime % 3600) / 60
+	seconds := h.Uptime % 60
 
 	fmt.Println("========= Host Basic Information =========")
 	fmt.Printf("Hostname:              %s\n", h.Hostname)
@@ -64,6 +76,7 @@ func (h *HostInfo) Print() {
 		float64(h.TotalMemory)/float64(gib))
 	fmt.Printf("Root Filesystem Total: %.2f GiB\n",
 		float64(h.RootDiskTotal)/float64(gib))
+	fmt.Printf("System Uptime:         %d days, %d hours, %d minutes, %d seconds\n",days, hours, minutes, seconds)
 	fmt.Println("==========================================")
 }
 
@@ -91,4 +104,18 @@ func readDisk(path string) (uint64, error) {
 	}
 
 	return stat.Blocks * uint64(stat.Bsize), nil
+}
+
+func readUptime() (uint64, error) {
+	data, err := os.ReadFile("/proc/uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	var seconds float64
+	if _, err := fmt.Sscanf(string(data), "%f", &seconds); err != nil {
+		return 0, err
+	}
+
+	return uint64(seconds), nil
 }
