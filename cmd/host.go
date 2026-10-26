@@ -29,11 +29,28 @@ var hostInfoCmd = &cobra.Command{
 	},
 }
 
+var hostCheckCmd = &cobra.Command{
+	Use:   "check",
+	Short: "检查主机资源使用情况",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		disk, err := host.CheckDisk("/")
+		if err != nil {
+			return err
+		}
+
+		disk.Print()
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(hostCmd)
 	hostCmd.AddCommand(hostInfoCmd)
+	hostCmd.AddCommand(hostCheckCmd)
 }
 
 func printError(format string, args ...any) {
 	fmt.Printf(format+"\n", args...)
 }
+

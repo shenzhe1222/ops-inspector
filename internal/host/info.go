@@ -63,6 +63,7 @@ func (h *HostInfo) Print() {
 
 	days := h.Uptime / 86400
 	hours := (h.Uptime % 86400) / 3600
+	minutes := (h.Uptime % 3600) / 60
 
 	fmt.Println("========= Host Basic Information =========")
 	fmt.Printf("Hostname:              %s\n", h.Hostname)
@@ -74,7 +75,7 @@ func (h *HostInfo) Print() {
 		float64(h.TotalMemory)/float64(gib))
 	fmt.Printf("Root Filesystem Total: %.2f GiB\n",
 		float64(h.RootDiskTotal)/float64(gib))
-	fmt.Printf("System Uptime:         %d days, %d hours\n",days, hours)
+	fmt.Printf("System Uptime:         %d days, %d hours, %d minutes\n", days, hours, minutes)
 	fmt.Println("==========================================")
 }
 
