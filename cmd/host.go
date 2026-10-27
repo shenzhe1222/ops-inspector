@@ -3,21 +3,20 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-	
 	"ops-inspector/internal/host"
 )
 
-var hostCmd = &cobra.Command{
-	Use:   "host",
-	Short: "主机信息与检查",
-}
+func runHost(args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("missing host command: use info or check")
+	}
 
-var hostInfoCmd = &cobra.Command{
-	Use:   "info",
-	Short: "查看主机基础信息",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	switch args[0] {
+	case "info":
+		if len(args) != 1 {
+			return fmt.Errorf("usage: ops-inspector host info")
+		}
+
 		var info host.HostInfo
 
 		if err := info.CheckInfo(); err != nil {
@@ -26,14 +25,12 @@ var hostInfoCmd = &cobra.Command{
 
 		info.Print()
 		return nil
-	},
-}
 
-var hostCheckCmd = &cobra.Command{
-	Use:   "check",
-	Short: "检查主机资源使用情况",
-	Args:  cobra.NoArgs,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	case "check":
+		if len(args) != 1 {
+			return fmt.Errorf("usage: ops-inspector host check")
+		}
+
 		disk, err := host.CheckDisk("/")
 		if err != nil {
 			return err
@@ -41,16 +38,8 @@ var hostCheckCmd = &cobra.Command{
 
 		disk.Print()
 		return nil
-	},
-}
 
-func init() {
-	rootCmd.AddCommand(hostCmd)
-	hostCmd.AddCommand(hostInfoCmd)
-	hostCmd.AddCommand(hostCheckCmd)
+	default:
+		return fmt.Errorf("unknown host command: %s", args[0])
+	}
 }
-
-func printError(format string, args ...any) {
-	fmt.Printf(format+"\n", args...)
-}
-
