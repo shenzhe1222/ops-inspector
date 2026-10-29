@@ -41,7 +41,7 @@ func ListUsage() ([]Usage, error) {
 
 		// 跳过虚拟文件系统
 		switch fsType {
-		case "xfs", "ext4", "ext3", "ext2":
+		case "xfs", "ext4", "ext3", "ext2","vfat":
 		default:
 			continue
 		}
