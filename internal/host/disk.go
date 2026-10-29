@@ -55,7 +55,7 @@ func CheckDisk(path string) (*DiskCheck, error) {
 func (d *DiskCheck) Print() {
 	const gib = 1024 * 1024 * 1024
 
-	fmt.Println("========= Host Resource Check =========")
+	fmt.Println("=========  Host  Disk  Check  =========")
 	fmt.Printf("Filesystem:    %s\n", d.Path)
 	fmt.Printf("Total:         %.2f GiB\n", float64(d.Total)/float64(gib))
 	fmt.Printf("Used:          %.2f GiB\n", float64(d.Used)/float64(gib))

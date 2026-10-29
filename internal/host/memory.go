@@ -80,7 +80,7 @@ func CheckMemory() (*MemoryCheck, error) {
 func (m *MemoryCheck) Print() {
 	const gib = 1024 * 1024 * 1024
 
-	fmt.Println("=========  Host  Memory  Check  =========")
+	fmt.Println("=========  Host Memory Check  =========")
 	fmt.Printf("Total:         %.2f GiB\n", float64(m.Total)/float64(gib))
 	fmt.Printf("Used:          %.2f GiB\n", float64(m.Used)/float64(gib))
 	fmt.Printf("Available:     %.2f GiB\n", float64(m.Available)/float64(gib))

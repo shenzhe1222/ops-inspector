@@ -40,7 +40,13 @@ func runHost(args []string) error {
 		if err != nil {
 			return err
 		}
-		
+
+		cpu, err := host.CheckCPU()
+		if err != nil {
+			return err
+		}
+
+		cpu.Print()
         memory.Print()
 		disk.Print()
 		return nil
