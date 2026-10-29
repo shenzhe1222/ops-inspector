@@ -40,9 +40,9 @@ func runHost(args []string) error {
 		if err != nil {
 			return err
 		}
-
+		
+        memory.Print()
 		disk.Print()
-		memory.Print()
 		return nil
 
 	default:
