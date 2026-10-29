@@ -9,6 +9,7 @@ import (
 )
 
 type CPUCheck struct {
+	Cores  int
 	Usage  float64
 	Status string
 }
@@ -43,6 +44,7 @@ func CheckCPU() (*CPUCheck, error) {
 	}
 
 	return &CPUCheck{
+		Cores:  runtime.NumCPU(),
 		Usage:  usage,
 		Status: status,
 	}, nil
@@ -80,7 +82,8 @@ func readCPUStat() (uint64, uint64, error) {
 }
 
 func (c *CPUCheck) Print() {
-	fmt.Println("=========  Host CPU Check  =========")
+	fmt.Println("=========   Host CPU Check   =========")
+	fmt.Printf("Cores:         %d\n", c.Cores)
 	fmt.Printf("Usage:         %.1f%%\n", c.Usage)
 	fmt.Printf("Status:        %s\n", c.Status)
 }
