@@ -21,6 +21,8 @@ func run(args []string) error {
 	switch args[0] {
 	case "host":
 		return runHost(args[1:])
+	case "disk":
+		return runDisk(args[1:])
 	case "help", "--help", "-h":
 		printUsage()
 		return nil
