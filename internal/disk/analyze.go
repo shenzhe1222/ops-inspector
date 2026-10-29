@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
+	"syscall"
 )
 
 type AnalyzeResult struct {
@@ -27,57 +29,98 @@ func Analyze(path string, top int) ([]AnalyzeResult, error) {
 		top = 10
 	}
 
-	entries, err := os.ReadDir(path)
-	if err != nil {
-		return nil, fmt.Errorf("read directory %s: %w", path, err)
+	rootStat, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return nil, fmt.Errorf("cannot get filesystem device: %s", path)
 	}
+	rootDev := rootStat.Dev
 
-	results := make([]AnalyzeResult, 0, len(entries))
+	// 保存每个路径自身占用的磁盘块大小。
+	sizes := make(map[string]int64)
 
-	for _, entry := range entries {
-		itemPath := filepath.Join(path, entry.Name())
+	// 保存路径是否为目录。
+	dirs := make(map[string]bool)
 
-		// 分析根目录时，跳过虚拟文件系统
-		if filepath.Clean(path) == "/" {
-			switch itemPath {
-			case "/proc", "/sys", "/dev", "/run":
-				continue
-			}
-		}
-
-		var totalSize int64
-
-		err := filepath.WalkDir(itemPath, func(currentPath string, entry fs.DirEntry, walkErr error) error {
-			if walkErr != nil {
-				return nil
-			}
-
-			if entry.IsDir() {
-				return nil
-			}
-
-			info, err := entry.Info()
-			if err != nil {
-				return err
-			}
-
-			if info.Mode().IsRegular() {
-				totalSize += info.Size()
-			}
-
+	err = filepath.WalkDir(path, func(
+		currentPath string,
+		entry fs.DirEntry,
+		walkErr error,
+	) error {
+		// 忽略权限错误、文件消失等遍历错误。
+		if walkErr != nil {
 			return nil
-		})
-
-		if err != nil {
-			return nil, fmt.Errorf("analyze %s: %w", itemPath, err)
 		}
 
+		info, err := entry.Info()
+		if err != nil {
+			return nil
+		}
+
+		stat, ok := info.Sys().(*syscall.Stat_t)
+		if !ok {
+			return nil
+		}
+
+		// 类似 du -x：不进入其他文件系统。
+		if stat.Dev != rootDev {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		// 使用实际分配的磁盘块大小，单位转换为字节。
+		sizes[currentPath] = stat.Blocks * 512
+		dirs[currentPath] = entry.IsDir()
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("analyze %s: %w", path, err)
+	}
+
+	// 按目录层级从深到浅排列。
+	paths := make([]string, 0, len(sizes))
+	for p := range sizes {
+		paths = append(paths, p)
+	}
+
+	sort.Slice(paths, func(i, j int) bool {
+		depthI := strings.Count(filepath.Clean(paths[i]), string(os.PathSeparator))
+		depthJ := strings.Count(filepath.Clean(paths[j]), string(os.PathSeparator))
+
+		if depthI != depthJ {
+			return depthI > depthJ
+		}
+		return len(paths[i]) > len(paths[j])
+	})
+
+	// 将子项大小逐级累加到父目录。
+	for _, p := range paths {
+		if !dirs[p] {
+			continue
+		}
+
+		parent := filepath.Dir(p)
+		if parent == p {
+			continue
+		}
+
+		if _, exists := sizes[parent]; exists {
+			sizes[parent] += sizes[p]
+		}
+	}
+
+	// 转换成结果列表。
+	results := make([]AnalyzeResult, 0, len(sizes))
+	for p, size := range sizes {
 		results = append(results, AnalyzeResult{
-			Path: itemPath,
-			Size: totalSize,
+			Path: p,
+			Size: size,
 		})
 	}
 
+	// 从大到小排序。
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Size > results[j].Size
 	})
@@ -93,7 +136,7 @@ func PrintAnalyze(results []AnalyzeResult) {
 	const gib = 1024 * 1024 * 1024
 	const mib = 1024 * 1024
 
-	fmt.Printf("%-60s %12s\n", "Path", "Size")
+	fmt.Printf("%-75s %12s\n", "Path", "Size")
 
 	for _, item := range results {
 		size := float64(item.Size) / float64(mib)
@@ -104,6 +147,6 @@ func PrintAnalyze(results []AnalyzeResult) {
 			unit = "GiB"
 		}
 
-		fmt.Printf("%-60s %10.2f %s\n", item.Path, size, unit)
+		fmt.Printf("%-75s %10.2f %s\n", item.Path, size, unit)
 	}
 }
