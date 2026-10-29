@@ -40,7 +40,7 @@ func Analyze(path string, top int) ([]AnalyzeResult, error) {
 
 		err := filepath.WalkDir(itemPath, func(currentPath string, entry fs.DirEntry, walkErr error) error {
 			if walkErr != nil {
-				return walkErr
+				return nil
 			}
 
 			if entry.IsDir() {
