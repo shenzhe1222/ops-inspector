@@ -36,7 +36,13 @@ func runHost(args []string) error {
 			return err
 		}
 
+		memory, err := host.CheckMemory()
+		if err != nil {
+			return err
+		}
+
 		disk.Print()
+		memory.Print()
 		return nil
 
 	default:
