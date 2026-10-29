@@ -36,6 +36,15 @@ func Analyze(path string, top int) ([]AnalyzeResult, error) {
 
 	for _, entry := range entries {
 		itemPath := filepath.Join(path, entry.Name())
+
+		// 分析根目录时，跳过虚拟文件系统
+		if filepath.Clean(path) == "/" {
+			switch itemPath {
+			case "/proc", "/sys", "/dev", "/run":
+				continue
+			}
+		}
+
 		var totalSize int64
 
 		err := filepath.WalkDir(itemPath, func(currentPath string, entry fs.DirEntry, walkErr error) error {
