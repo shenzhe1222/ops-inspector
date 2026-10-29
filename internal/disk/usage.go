@@ -41,11 +41,8 @@ func ListUsage() ([]Usage, error) {
 
 		// 跳过虚拟文件系统
 		switch fsType {
-		case "proc", "sysfs", "devtmpfs", "devpts",
-			"tmpfs", "cgroup", "cgroup2", "securityfs",
-			"pstore", "debugfs", "tracefs", "configfs",
-			"mqueue", "hugetlbfs", "rpc_pipefs",
-			"autofs", "fusectl":
+		case "xfs", "ext4", "ext3", "ext2":
+		default:
 			continue
 		}
 
