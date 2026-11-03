@@ -123,8 +123,8 @@ cmd/
 
 **`internal/process/`**
 
-- 基于 Linux `/proc` 获取进程列表、详情、线程、文件描述符数量和父子关系。
-- 统计进程状态，并按 CPU 和常驻内存用量排行。
+- 第一版基于 Linux `/proc` 获取进程列表、详情和状态统计。
+- 后续再扩展 CPU/内存排行、线程、文件描述符和进程树。
 
 ## 5. 命令设计
 
@@ -148,7 +148,7 @@ ops-inspector -d usage
 ops-inspector -d analyze <path> [--top N]
 ```
 
-### 进程管理（Linux）
+### 进程诊断（Linux）
 
 ```bash
 # 查看进程列表
@@ -157,23 +157,11 @@ ops-inspector -p list
 # 查看指定进程详情
 ops-inspector -p info 1234
 
-# 查看 CPU 和内存占用排行（CPU 采样间隔 1 秒）
-ops-inspector -p top
-
-# 查看指定进程的线程
-ops-inspector -p threads 1234
-
-# 查看指定进程打开的文件描述符数量
-ops-inspector -p fd 1234
-
-# 查看指定进程及其子进程树
-ops-inspector -p tree 1234
-
 # 查看进程状态统计
 ops-inspector -p stats
 ```
 
-进程信息通过 Linux `/proc` 文件系统读取；`top` 分别输出 CPU 和常驻内存排行。
+进程信息通过 Linux `/proc` 文件系统读取。第一版仅提供列表、单进程详情和状态统计；CPU 使用率需要采样后再计算，因此排行、线程、文件描述符及进程树后续再实现。
 
 ### 网络（尚未实现）
 
