@@ -15,8 +15,12 @@ import (
 type Socket struct {
 	LocalAddress string
 	LocalPort    uint16
+	RemoteAddress string
+	RemotePort    uint16
 	Protocol     string
 	State        string
+	AddressType  string
+	Inode        uint64
 }
 
 type Reader struct {
@@ -51,11 +55,16 @@ func (r *Reader) readTCPFile(name string) ([]Socket, error) {
 	for scanner.Scan() {
 		lineNumber++
 		fields := strings.Fields(scanner.Text())
-		if len(fields) < 4 {
-			return nil, fmt.Errorf("parse %s line %d: expected at least 4 fields", path, lineNumber)
+		if len(fields) < 10 {
+			return nil, fmt.Errorf("parse %s line %d: expected at least 10 fields", path, lineNumber)
 		}
 
-		address, port, err := parseLocalAddress(fields[1], name == "tcp6")
+		ipv6 := name == "tcp6"
+		address, port, err := parseProcAddress(fields[1], ipv6)
+		if err != nil {
+			return nil, fmt.Errorf("parse %s line %d: %w", path, lineNumber, err)
+		}
+		remoteAddress, remotePort, err := parseProcAddress(fields[2], ipv6)
 		if err != nil {
 			return nil, fmt.Errorf("parse %s line %d: %w", path, lineNumber, err)
 		}
@@ -63,12 +72,20 @@ func (r *Reader) readTCPFile(name string) ([]Socket, error) {
 		if !ok {
 			return nil, fmt.Errorf("parse %s line %d: invalid TCP state %q", path, lineNumber, fields[3])
 		}
+		inode, err := strconv.ParseUint(fields[9], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse %s line %d: invalid socket inode %q", path, lineNumber, fields[9])
+		}
 
 		sockets = append(sockets, Socket{
-			LocalAddress: address,
-			LocalPort:    port,
-			Protocol:     "TCP",
-			State:        state,
+			LocalAddress:  address,
+			LocalPort:     port,
+			RemoteAddress: remoteAddress,
+			RemotePort:    remotePort,
+			Protocol:      "TCP",
+			State:         state,
+			AddressType:   addressType(ipv6),
+			Inode:         inode,
 		})
 	}
 	if err := scanner.Err(); err != nil {
@@ -77,7 +94,7 @@ func (r *Reader) readTCPFile(name string) ([]Socket, error) {
 	return sockets, nil
 }
 
-func parseLocalAddress(value string, ipv6 bool) (string, uint16, error) {
+func parseProcAddress(value string, ipv6 bool) (string, uint16, error) {
 	parts := strings.Split(value, ":")
 	if len(parts) != 2 {
 		return "", 0, fmt.Errorf("invalid local address %q", value)
@@ -113,6 +130,13 @@ func parseLocalAddress(value string, ipv6 bool) (string, uint16, error) {
 		binary.NativeEndian.PutUint32(address, word)
 	}
 	return net.IP(address).String(), uint16(port), nil
+}
+
+func addressType(ipv6 bool) string {
+	if ipv6 {
+		return "IPv6"
+	}
+	return "IPv4"
 }
 
 func tcpState(value string) (string, bool) {

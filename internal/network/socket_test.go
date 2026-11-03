@@ -8,13 +8,13 @@ import (
 
 func TestListenAndPort(t *testing.T) {
 	root := t.TempDir()
-	writeProcTCP(t, root, "tcp", "  sl  local_address rem_address   st\n"+
-		"   0: 00000000:0050 00000000:0000 0A\n"+
-		"   1: 0100007F:0CEA 00000000:0000 0A\n"+
-		"   2: 00000000:01BB 0100007F:9C40 01\n")
-	writeProcTCP(t, root, "tcp6", "  sl  local_address rem_address   st\n"+
-		"   0: 00000000000000000000000000000000:1F90 00000000000000000000000000000000:0000 0A\n"+
-		"   1: 00000000000000000000000001000000:0050 00000000000000000000000000000000:0000 0A\n")
+	writeProcTCP(t, root, "tcp", "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt uid timeout inode\n"+
+		"   0: 00000000:0050 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 12345\n"+
+		"   1: 0100007F:0CEA 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 12346\n"+
+		"   2: 00000000:01BB 0100007F:9C40 01 00000000:00000000 00:00000000 00000000 0 0 12347\n")
+	writeProcTCP(t, root, "tcp6", "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt uid timeout inode\n"+
+		"   0: 00000000000000000000000000000000:1F90 00000000000000000000000000000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 22345\n"+
+		"   1: 00000000000000000000000001000000:0050 00000000000000000000000000000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 22346\n")
 
 	reader := NewReader(root)
 	listeners, err := reader.Listen()
@@ -24,12 +24,17 @@ func TestListenAndPort(t *testing.T) {
 	if len(listeners) != 4 {
 		t.Fatalf("Listen() returned %d listeners, want 4: %#v", len(listeners), listeners)
 	}
-	if listeners[0].LocalAddress != "0.0.0.0" || listeners[0].LocalPort != 80 || listeners[0].State != "LISTEN" {
+	if listeners[0].LocalAddress != "0.0.0.0" || listeners[0].LocalPort != 80 ||
+		listeners[0].State != "LISTEN" || listeners[0].RemoteAddress != "0.0.0.0" ||
+		listeners[0].RemotePort != 0 || listeners[0].AddressType != "IPv4" ||
+		listeners[0].Inode != 12345 {
 		t.Errorf("first listener = %#v", listeners[0])
 	}
 	var foundIPv6 bool
 	for _, socket := range listeners {
-		if socket.LocalAddress == "::" && socket.LocalPort == 8080 {
+		if socket.LocalAddress == "::" && socket.LocalPort == 8080 &&
+			socket.RemoteAddress == "::" && socket.RemotePort == 0 &&
+			socket.AddressType == "IPv6" && socket.Inode == 22345 {
 			foundIPv6 = true
 		}
 	}
@@ -57,7 +62,7 @@ func TestParseLocalAddress(t *testing.T) {
 		{"00000000000000000000000001000000:0050", true, "::1", 80},
 	}
 	for _, test := range tests {
-		address, port, err := parseLocalAddress(test.input, test.ipv6)
+		address, port, err := parseProcAddress(test.input, test.ipv6)
 		if err != nil {
 			t.Errorf("parseLocalAddress(%q) error = %v", test.input, err)
 			continue
@@ -75,6 +80,15 @@ func TestReadTCPFileRejectsMalformedRows(t *testing.T) {
 	reader := NewReader(root)
 	if _, err := reader.readTCPFile("tcp"); err == nil {
 		t.Fatal("readTCPFile() error = nil, want malformed-row error")
+	}
+}
+
+func TestReadTCPFileRejectsInvalidInode(t *testing.T) {
+	root := t.TempDir()
+	writeProcTCP(t, root, "tcp", "header\n"+
+		"0: 00000000:0050 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 invalid\n")
+	if _, err := NewReader(root).readTCPFile("tcp"); err == nil {
+		t.Fatal("readTCPFile() error = nil, want invalid inode error")
 	}
 }
 

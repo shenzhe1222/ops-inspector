@@ -63,6 +63,10 @@ func printPortInformation(sockets []network.Socket) {
 		fmt.Printf("Protocol:       %s\n", socket.Protocol)
 		fmt.Printf("Local Address:  %s\n", socket.LocalAddress)
 		fmt.Printf("Local Port:     %d\n", socket.LocalPort)
+		fmt.Printf("Remote Address: %s\n", socket.RemoteAddress)
+		fmt.Printf("Remote Port:    %d\n", socket.RemotePort)
 		fmt.Printf("State:          %s\n", socket.State)
+		fmt.Printf("Address Type:   %s\n", socket.AddressType)
+		fmt.Printf("Socket Inode:   %d\n", socket.Inode)
 	}
 }

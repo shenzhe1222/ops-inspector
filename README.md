@@ -173,7 +173,7 @@ ops-inspector -n listen
 ops-inspector -n port 8080
 ```
 
-网络信息通过 `/proc/net/tcp` 和 `/proc/net/tcp6` 读取，只展示 TCP LISTEN 状态；暂不关联 PID 或进程。
+网络信息通过 `/proc/net/tcp` 和 `/proc/net/tcp6` 读取。`port` 详情包含本地/远端地址与端口、TCP 状态、地址类型和 Socket Inode；暂不关联 PID 或进程。
 
 ### 密码生成
 
