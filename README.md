@@ -1,93 +1,263 @@
 # ops-inspector
 
+## 1. 项目简介
 
+`ops-inspector` 是一个基于 Go 开发的轻量级运维诊断命令行工具，面向 Linux 主机、网络和 Kubernetes 环境，提供基础信息采集、资源检查与故障诊断能力。
 
-## Getting started
+项目以 Linux 主机诊断为第一阶段，逐步扩展网络诊断、进程分析和 Kubernetes 集群检查能力，形成可持续扩展的运维工具。
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### 设计目标
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- **轻量化：** 优先使用 Go 标准库，减少外部依赖。
+- **模块化：** 将命令分发与具体业务逻辑分离。
+- **可扩展：** 支持逐步增加主机、网络、进程和 Kubernetes 诊断模块。
+- **可维护：** 统一错误处理、代码组织和输出规范。
+- **只读诊断：** 默认只采集信息和检查状态，不主动修改系统配置或执行修复操作。
 
-## Add your files
+## 2. 技术选型
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+| 技术 | 用途 |
+|---|---|
+| Go | 核心开发语言 |
+| `os.Args` | 获取命令行参数 |
+| `switch` | 实现命令分发 |
+| Go 标准库 | 系统信息采集、文件读取、网络检查 |
+| Linux `/proc`、`syscall` 等接口 | 获取系统运行状态，按具体功能选用 |
+| Go `testing` | 单元测试与功能验证 |
+| Git | 版本管理 |
+| Jenkins | 后续可用于自动化构建和测试 |
 
+初期不引入 Cobra 等 CLI 框架。待命令数量、参数校验或自动补全需求明显增加后，再评估是否引入。
+
+## 3. 项目目录结构
+
+```text
+ops-inspector/
+├── main.go
+├── go.mod
+├── go.sum
+├── README.md
+│
+├── cmd/
+│   ├── root.go
+│   ├── host.go
+│   ├── network.go
+│   └── version.go
+│
+├── internal/
+│   ├── host/
+│   │   ├── info.go
+│   │   ├── memory.go
+│   │   ├── disk.go
+│   │   └── check.go
+│   │
+│   ├── network/
+│   │   ├── ping.go
+│   │   ├── port.go
+│   │   └── check.go
+│   │
+│   └── process/
+│       └── info.go
+│
+└── testdata/
 ```
-cd existing_repo
-git remote add origin http://git.ai.com/ethan/ops-inspector.git
-git branch -M main
-git push -uf origin main
+
+说明：以上是目标结构。尚未实现的模块可以暂时不创建；`go.sum` 在存在需要记录校验信息的模块依赖时生成，使用纯标准库时不一定存在。
+
+## 4. 架构设计
+
+采用简单的分层结构，将程序入口、命令分发和业务实现分离。
+
+```text
+用户输入
+   │
+   ▼
+main.go
+程序入口与最终错误处理
+   │
+   ▼
+cmd/
+参数解析与命令分发
+   │
+   ├── host
+   │     └── internal/host/
+   │
+   ├── network
+   │     └── internal/network/
+   │
+   ├── process
+   │     └── internal/process/
+   │
+   └── version
+         └── 版本信息
 ```
 
-## Integrate with your tools
+### 各层职责
 
-* [Set up project integrations](http://git.ai.com/ethan/ops-inspector/-/settings/integrations)
+**`main.go`**
 
-## Collaborate with your team
+- 启动程序。
+- 调用命令分发入口。
+- 统一处理未被业务层处理的错误。
+- 根据执行结果设置适当的退出状态码。
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+**`cmd/`**
 
-## Test and Deploy
+- 读取和解析命令行参数。
+- 判断模块和具体命令。
+- 调用对应的业务函数。
+- 输出用法提示及命令级错误。
 
-Use the built-in continuous integration in GitLab.
+**`internal/host/`**
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+- 采集主机基础信息。
+- 获取内存、磁盘等资源数据。
+- 判断资源状态。
+- 返回结构化结果或错误。
 
-***
+**`internal/network/`**
 
-# Editing this README
+- 检查目标地址连通性。
+- 检查 TCP 端口连接。
+- 汇总基础网络诊断结果。
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+**`internal/process/`**
 
-## Suggestions for a good README
+- 获取进程基本信息。
+- 后续可扩展进程资源使用情况和异常进程排查辅助功能。
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## 5. 命令设计
 
-## Name
-Choose a self-explaining name for your project.
+### 主机诊断
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+```bash
+# 查看主机基础信息
+ops-inspector host info
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+# 检查主机资源
+ops-inspector host check
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+# 查看磁盘信息（后续扩展）
+ops-inspector host disk
+```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+### 网络诊断
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+```bash
+# 检查基础网络连通性
+ops-inspector network check
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+# 检查目标 TCP 端口（后续扩展）
+ops-inspector network port
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 密码生成
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+# 生成包含大写字母、小写字母和数字的随机密码（长度必须大于 8 且小于 64）
+ops-inspector password generate 16
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+### 其他命令
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+```bash
+# 查看工具版本
+ops-inspector version
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+# 查看命令使用说明
+ops-inspector help
+```
 
-## License
-For open source projects, say how it is licensed.
+上述命令是目标接口设计。尚未实现的命令应在完成开发后再对外提供，不能仅因写入文档就视为可用。
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+## 6. 功能规划
+
+### 第一阶段：Linux 主机基础诊断
+
+- 主机名、操作系统、内核版本、CPU 架构。
+- CPU 逻辑核心数。
+- 总内存与内存使用情况。
+- 根文件系统容量、已用空间、可用空间和使用率。
+- 基础资源状态判断。
+- 统一错误处理。
+
+### 第二阶段：Linux 资源与进程诊断
+
+- 磁盘和挂载点信息。
+- 内存与 CPU 使用情况。
+- 进程基本信息。
+- 常见资源异常的辅助定位。
+
+### 第三阶段：网络诊断
+
+- IP 地址与基础网络信息。
+- 目标地址连通性检查。
+- TCP 端口连接测试。
+- DNS 解析检查。
+- 基础连接故障定位。
+
+### 第四阶段：Kubernetes 诊断
+
+- 集群与节点状态。
+- Pod 异常状态汇总。
+- 常见工作负载问题检查。
+- 关键事件与资源状态分析。
+
+Kubernetes 阶段再根据实际需求评估引入 `client-go` 等依赖。
+
+### 第五阶段：工程化
+
+- 单元测试与集成测试。
+- 标准化输出和退出码。
+- 版本管理与构建发布。
+- Jenkins 自动化测试与构建。
+- 后续按需增加 JSON 输出，便于接入自动化平台。
+
+## 7. 核心设计原则
+
+### 命令层与业务层分离
+
+命令层只负责识别输入和调用函数，不直接承担复杂的系统信息采集逻辑。
+
+### 统一错误处理
+
+业务函数优先返回 `error`，由调用方决定如何输出和处理。
+
+```go
+func CheckInfo() error {
+    // 执行检查
+    return nil
+}
+```
+
+`nil` 表示执行成功；非 `nil` 表示发生错误。
+
+### 结果与输出分离
+
+随着功能增加，优先让业务层返回结构化数据，再由命令层负责格式化输出，避免业务逻辑与终端展示紧密耦合。
+
+### 默认只读
+
+工具默认不修改系统配置、不重启服务、不删除文件、不执行自动修复。后续如果增加变更能力，应明确区分诊断与操作，并设置必要的权限和安全控制。
+
+### 渐进式开发
+
+优先完成一个可以运行、验证和测试的功能，再增加下一个模块。避免提前引入暂时用不到的框架、抽象层和依赖。
+
+## 8. 当前开发重点
+
+当前阶段聚焦于 Linux 主机诊断，并通过项目实践掌握 Go 基础：
+
+1. 理解 `main()`、函数调用和返回值。
+2. 理解结构体、方法和指针接收者。
+3. 掌握 `error` 的返回与传递。
+4. 理解 `os.Args` 和 `switch` 命令分发。
+5. 掌握 Go 包、目录结构与导入关系。
+6. 完成主机信息采集和磁盘资源检查。
+7. 通过实际命令验证程序输出和异常处理。
+
+## 9. 项目定位
+
+`ops-inspector` 不以替代 `kubectl`、`top`、`ss` 等成熟系统工具为目标，而是将常用的只读诊断能力整合成统一、可复用、可自动化调用的命令行接口。
+
+长期目标是形成一个面向 SRE 与云原生运维场景的诊断工具，在掌握 Go 工程实践的同时，逐步积累 Linux、网络、可观测性和 Kubernetes 的底层运维能力。
