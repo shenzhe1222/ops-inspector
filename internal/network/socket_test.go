@@ -1,8 +1,11 @@
 package network
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -51,6 +54,29 @@ func TestListenAndPort(t *testing.T) {
 	}
 }
 
+func TestPortAssociatesAllProcessesWithSocketInode(t *testing.T) {
+	netRoot := t.TempDir()
+	procRoot := t.TempDir()
+	writeProcTCP(t, netRoot, "tcp", "header\n"+
+		"0: 00000000:1F90 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 12345\n")
+	writeProcTCP(t, netRoot, "tcp6", "header\n")
+	writeProcessFD(t, procRoot, 1520, "java", "java -jar application.jar", 12345)
+	writeProcessFD(t, procRoot, 1521, "worker", "/usr/bin/worker", 12345)
+
+	sockets, err := NewReaderWithProcRoot(netRoot, procRoot).Port(8080)
+	if err != nil {
+		t.Fatalf("Port(8080) error = %v", err)
+	}
+	if len(sockets) != 1 || len(sockets[0].Processes) != 2 {
+		t.Fatalf("Port(8080) process associations = %#v", sockets)
+	}
+	first := sockets[0].Processes[0]
+	if first.PID != 1520 || first.Name != "java" || first.User != "root" ||
+		first.Command != "java -jar application.jar" {
+		t.Errorf("first process = %#v", first)
+	}
+}
+
 func TestParseLocalAddress(t *testing.T) {
 	tests := []struct {
 		input string
@@ -89,6 +115,26 @@ func TestReadTCPFileRejectsInvalidInode(t *testing.T) {
 		"0: 00000000:0050 00000000:0000 0A 00000000:00000000 00:00000000 00000000 0 0 invalid\n")
 	if _, err := NewReader(root).readTCPFile("tcp"); err == nil {
 		t.Fatal("readTCPFile() error = nil, want invalid inode error")
+	}
+}
+
+func writeProcessFD(t *testing.T, root string, pid int, name, command string, inode uint64) {
+	t.Helper()
+	dir := filepath.Join(root, strconv.Itoa(pid))
+	if err := os.MkdirAll(filepath.Join(dir, "fd"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(fmt.Sprintf("socket:[%d]", inode), filepath.Join(dir, "fd", "3")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "comm"), []byte(name+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "status"), []byte("Uid:\t0\t0\t0\t0\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "cmdline"), []byte(strings.ReplaceAll(command, " ", "\x00")+"\x00"), 0o600); err != nil {
+		t.Fatal(err)
 	}
 }
 

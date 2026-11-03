@@ -68,5 +68,26 @@ func printPortInformation(sockets []network.Socket) {
 		fmt.Printf("State:          %s\n", socket.State)
 		fmt.Printf("Address Type:   %s\n", socket.AddressType)
 		fmt.Printf("Socket Inode:   %d\n", socket.Inode)
+		fmt.Println()
+		fmt.Println("Process:")
+		if len(socket.Processes) == 0 {
+			if socket.ProcessWarning != "" {
+				fmt.Println("  Process association may be incomplete")
+			} else {
+				fmt.Println("  No associated process found")
+			}
+		}
+		for i, proc := range socket.Processes {
+			if i > 0 {
+				fmt.Println()
+			}
+			fmt.Printf("PID:            %d\n", proc.PID)
+			fmt.Printf("Name:           %s\n", proc.Name)
+			fmt.Printf("User:           %s\n", proc.User)
+			fmt.Printf("Command:        %s\n", proc.Command)
+		}
+		if socket.ProcessWarning != "" {
+			fmt.Printf("Warning:        %s\n", socket.ProcessWarning)
+		}
 	}
 }

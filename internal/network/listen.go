@@ -28,6 +28,9 @@ func (r *Reader) Port(port uint16) ([]Socket, error) {
 			matches = append(matches, socket)
 		}
 	}
+	if err := r.associateProcesses(matches); err != nil {
+		return nil, err
+	}
 	return matches, nil
 }
 

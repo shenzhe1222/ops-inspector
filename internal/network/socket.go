@@ -13,25 +13,45 @@ import (
 )
 
 type Socket struct {
-	LocalAddress string
-	LocalPort    uint16
+	LocalAddress  string
+	LocalPort     uint16
 	RemoteAddress string
 	RemotePort    uint16
-	Protocol     string
-	State        string
-	AddressType  string
-	Inode        uint64
+	Protocol      string
+	State         string
+	AddressType   string
+	Inode          uint64
+	Processes      []ProcessInfo
+	ProcessWarning string
+}
+
+type ProcessInfo struct {
+	PID     int
+	Name    string
+	User    string
+	Command string
 }
 
 type Reader struct {
-	root string
+	root     string
+	procRoot string
 }
 
 func NewReader(procNetRoot string) *Reader {
 	if procNetRoot == "" {
 		procNetRoot = "/proc/net"
 	}
-	return &Reader{root: procNetRoot}
+	return NewReaderWithProcRoot(procNetRoot, filepath.Dir(procNetRoot))
+}
+
+func NewReaderWithProcRoot(procNetRoot, procRoot string) *Reader {
+	if procNetRoot == "" {
+		procNetRoot = "/proc/net"
+	}
+	if procRoot == "" {
+		procRoot = "/proc"
+	}
+	return &Reader{root: procNetRoot, procRoot: procRoot}
 }
 
 func (r *Reader) readTCPFile(name string) ([]Socket, error) {
