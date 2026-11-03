@@ -173,7 +173,7 @@ ops-inspector -p stats
 
 ```bash
 # 生成包含大写字母、小写字母和数字的随机密码（长度为 8 到 64 位，含边界）
-ops-inspector -P generate 16
+ops-inspector -P 24
 ```
 
 ### 其他命令

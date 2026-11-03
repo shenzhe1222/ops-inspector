@@ -55,5 +55,5 @@ func printUsage() {
 	fmt.Println("  ops-inspector -p info 1234")
 	fmt.Println("  ops-inspector -p stats")
 	fmt.Println("  ops-inspector -n connections")
-	fmt.Println("  ops-inspector -P generate <length>  (8-64 位)")
+	fmt.Println("  ops-inspector -P <length>  (8-64 位)")
 }
