@@ -123,8 +123,8 @@ cmd/
 
 **`internal/process/`**
 
-- 获取进程基本信息。
-- 后续可扩展进程资源使用情况和异常进程排查辅助功能。
+- 基于 Linux `/proc` 获取进程列表、详情、线程、文件描述符数量和父子关系。
+- 统计进程状态，并按 CPU 和常驻内存用量排行。
 
 ## 5. 命令设计
 
@@ -148,16 +148,37 @@ ops-inspector -d usage
 ops-inspector -d analyze <path> [--top N]
 ```
 
-### 进程与网络（尚未实现）
+### 进程管理（Linux）
 
 ```bash
 # 查看进程列表
 ops-inspector -p list
 
-# 查看网络连接
-ops-inspector -n connections
+# 查看指定进程详情
+ops-inspector -p info 1234
 
-# 后续计划：ops-inspector -n check|port
+# 查看 CPU 和内存占用排行（CPU 采样间隔 1 秒）
+ops-inspector -p top
+
+# 查看指定进程的线程
+ops-inspector -p threads 1234
+
+# 查看指定进程打开的文件描述符数量
+ops-inspector -p fd 1234
+
+# 查看指定进程及其子进程树
+ops-inspector -p tree 1234
+
+# 查看进程状态统计
+ops-inspector -p stats
+```
+
+进程信息通过 Linux `/proc` 文件系统读取；`top` 分别输出 CPU 和常驻内存排行。
+
+### 网络（尚未实现）
+
+```bash
+# 后续计划：ops-inspector -n connections
 ```
 
 ### 密码生成
@@ -194,8 +215,7 @@ ops-inspector --help
 
 - 磁盘和挂载点信息。
 - 内存与 CPU 使用情况。
-- 进程基本信息。
-- 常见资源异常的辅助定位。
+- 常见进程资源异常的辅助定位。
 
 ### 第三阶段：网络诊断
 

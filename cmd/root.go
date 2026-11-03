@@ -24,7 +24,7 @@ func run(args []string) error {
 	case "-d", "--disk", "disk":
 		return runDisk(args[1:])
 	case "-p", "--process", "process":
-		return fmt.Errorf("process module is not implemented yet")
+		return runProcess(args[1:])
 	case "-n", "--network", "network":
 		return fmt.Errorf("network module is not implemented yet")
 	case "-P", "--password", "password":
@@ -52,6 +52,12 @@ func printUsage() {
 	fmt.Println("  ops-inspector -h info")
 	fmt.Println("  ops-inspector -d usage")
 	fmt.Println("  ops-inspector -p list")
+	fmt.Println("  ops-inspector -p info 1234")
+	fmt.Println("  ops-inspector -p top")
+	fmt.Println("  ops-inspector -p threads 1234")
+	fmt.Println("  ops-inspector -p fd 1234")
+	fmt.Println("  ops-inspector -p tree 1234")
+	fmt.Println("  ops-inspector -p stats")
 	fmt.Println("  ops-inspector -n connections")
 	fmt.Println("  ops-inspector -P generate <length>  (8-64 位)")
 }
