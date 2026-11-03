@@ -151,6 +151,13 @@ ops-inspector network check
 ops-inspector network port
 ```
 
+### 密码生成
+
+```bash
+# 生成包含大写字母、小写字母和数字的随机密码（长度必须大于 8 且小于 64）
+ops-inspector password generate 16
+```
+
 ### 其他命令
 
 ```bash

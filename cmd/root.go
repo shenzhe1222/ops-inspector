@@ -23,6 +23,8 @@ func run(args []string) error {
 		return runHost(args[1:])
 	case "disk":
 		return runDisk(args[1:])
+	case "password":
+		return runPassword(args[1:])
 	case "help", "--help", "-h":
 		printUsage()
 		return nil
@@ -37,5 +39,8 @@ func printUsage() {
 	fmt.Println("Commands:")
 	fmt.Println("  host info    查看主机基础信息")
 	fmt.Println("  host check   检查主机资源使用情况")
+	fmt.Println("  disk usage   查看磁盘使用情况")
+	fmt.Println("  disk analyze 分析指定目录的磁盘使用情况")
+	fmt.Println("  password generate <length> 生成指定长度的随机密码（9-63 位）")
 	fmt.Println("  help         查看帮助")
 }
