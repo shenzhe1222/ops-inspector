@@ -163,11 +163,17 @@ ops-inspector -p stats
 
 进程信息通过 Linux `/proc` 文件系统读取。第一版仅提供列表、单进程详情和状态统计；CPU 使用率需要采样后再计算，因此排行、线程、文件描述符及进程树后续再实现。
 
-### 网络（尚未实现）
+### 网络诊断（Linux）
 
 ```bash
-# 后续计划：ops-inspector -n connections
+# 查看 TCP 监听端口
+ops-inspector -n listen
+
+# 查询指定 TCP 端口
+ops-inspector -n port 8080
 ```
+
+网络信息通过 `/proc/net/tcp` 和 `/proc/net/tcp6` 读取，只展示 TCP LISTEN 状态；暂不关联 PID 或进程。
 
 ### 密码生成
 

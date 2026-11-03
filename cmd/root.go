@@ -26,7 +26,7 @@ func run(args []string) error {
 	case "-p", "--process", "process":
 		return runProcess(args[1:])
 	case "-n", "--network", "network":
-		return fmt.Errorf("network module is not implemented yet")
+		return runNetwork(args[1:])
 	case "-P", "--password", "password":
 		return runPassword(args[1:])
 	case "help", "--help":
@@ -54,6 +54,7 @@ func printUsage() {
 	fmt.Println("  ops-inspector -p list")
 	fmt.Println("  ops-inspector -p info 1234")
 	fmt.Println("  ops-inspector -p stats")
-	fmt.Println("  ops-inspector -n connections")
+	fmt.Println("  ops-inspector -n listen")
+	fmt.Println("  ops-inspector -n port 8080")
 	fmt.Println("  ops-inspector -P <length>  (8-64 位)")
 }
