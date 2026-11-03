@@ -35,7 +35,7 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestGenerateRejectsInvalidLength(t *testing.T) {
-	for _, length := range []int{0, 8, 64} {
+	for _, length := range []int{0, 7, 65} {
 		if _, err := Generate(length); err == nil {
 			t.Errorf("Generate(%d) error = nil, want error", length)
 		}

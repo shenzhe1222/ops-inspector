@@ -19,13 +19,17 @@ func run(args []string) error {
 	}
 
 	switch args[0] {
-	case "host":
+	case "-h", "--host", "host":
 		return runHost(args[1:])
-	case "disk":
+	case "-d", "--disk", "disk":
 		return runDisk(args[1:])
-	case "password":
+	case "-p", "--process", "process":
+		return fmt.Errorf("process module is not implemented yet")
+	case "-n", "--network", "network":
+		return fmt.Errorf("network module is not implemented yet")
+	case "-P", "--password", "password":
 		return runPassword(args[1:])
-	case "help", "--help", "-h":
+	case "help", "--help":
 		printUsage()
 		return nil
 	default:
@@ -34,13 +38,20 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("Usage: ops-inspector <command> [subcommand]")
+	fmt.Println("Usage: ops-inspector [module] <subcommand> [arguments]")
 	fmt.Println()
-	fmt.Println("Commands:")
-	fmt.Println("  host info    查看主机基础信息")
-	fmt.Println("  host check   检查主机资源使用情况")
-	fmt.Println("  disk usage   查看磁盘使用情况")
-	fmt.Println("  disk analyze 分析指定目录的磁盘使用情况")
-	fmt.Println("  password generate <length> 生成指定长度的随机密码（9-63 位）")
-	fmt.Println("  help         查看帮助")
+	fmt.Println("Modules:")
+	fmt.Println("  -h, --host       主机（Host）")
+	fmt.Println("  -d, --disk       磁盘（Disk）")
+	fmt.Println("  -p, --process    进程（Process）")
+	fmt.Println("  -n, --network    网络（Network）")
+	fmt.Println("  -P, --password   密码（Password）")
+	fmt.Println("  help, --help     查看帮助")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println("  ops-inspector -h info")
+	fmt.Println("  ops-inspector -d usage")
+	fmt.Println("  ops-inspector -p list")
+	fmt.Println("  ops-inspector -n connections")
+	fmt.Println("  ops-inspector -P generate <length>  (8-64 位)")
 }

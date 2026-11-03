@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	minPasswordLength = 9
-	maxPasswordLength = 63
+	minPasswordLength = 8
+	maxPasswordLength = 64
 	uppercase         = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	lowercase         = "abcdefghijklmnopqrstuvwxyz"
 	digits            = "0123456789"
@@ -16,7 +16,7 @@ const (
 
 func Generate(length int) (string, error) {
 	if length < minPasswordLength || length > maxPasswordLength {
-		return "", fmt.Errorf("password length must be greater than 8 and less than 64")
+		return "", fmt.Errorf("password length must be between 8 and 64")
 	}
 
 	password := make([]byte, 0, length)

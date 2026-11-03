@@ -9,15 +9,15 @@ import (
 
 func runPassword(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("missing password command: use generate")
+		return fmt.Errorf("usage: ops-inspector -P generate <length>")
 	}
 	if len(args) != 2 || args[0] != "generate" {
-		return fmt.Errorf("usage: ops-inspector password generate <length>")
+		return fmt.Errorf("usage: ops-inspector -P generate <length>")
 	}
 
 	length, err := strconv.Atoi(args[1])
 	if err != nil {
-		return fmt.Errorf("invalid password length %q: must be an integer greater than 8 and less than 64", args[1])
+		return fmt.Errorf("invalid password length %q: must be an integer between 8 and 64", args[1])
 	}
 
 	generated, err := password.Generate(length)

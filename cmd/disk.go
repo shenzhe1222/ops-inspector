@@ -7,13 +7,13 @@ import (
 
 func runDisk(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("missing disk command: use usage or analyze")
+		return fmt.Errorf("usage: ops-inspector -d usage|analyze")
 	}
 
 	switch args[0] {
 	case "usage":
 		if len(args) != 1 {
-			return fmt.Errorf("usage: ops-inspector disk usage")
+			return fmt.Errorf("usage: ops-inspector -d usage")
 		}
 
 		results, err := disk.ListUsage()
@@ -26,7 +26,7 @@ func runDisk(args []string) error {
 
 	case "analyze":
 		if len(args) < 2 {
-			return fmt.Errorf("usage: ops-inspector disk analyze <path> [--top N]")
+			return fmt.Errorf("usage: ops-inspector -d analyze <path> [--top N]")
 		}
 
 		path := args[1]
@@ -34,7 +34,7 @@ func runDisk(args []string) error {
 
 		if len(args) > 2 {
 			if len(args) != 4 || args[2] != "--top" {
-				return fmt.Errorf("usage: ops-inspector disk analyze <path> [--top N]")
+				return fmt.Errorf("usage: ops-inspector -d analyze <path> [--top N]")
 			}
 
 			if _, err := fmt.Sscanf(args[3], "%d", &top); err != nil || top <= 0 {

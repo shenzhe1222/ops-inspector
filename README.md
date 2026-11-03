@@ -132,30 +132,39 @@ cmd/
 
 ```bash
 # 查看主机基础信息
-ops-inspector host info
+ops-inspector -h info
 
 # 检查主机资源
-ops-inspector host check
-
-# 查看磁盘信息（后续扩展）
-ops-inspector host disk
+ops-inspector -h check
 ```
 
-### 网络诊断
+### 磁盘诊断
 
 ```bash
-# 检查基础网络连通性
-ops-inspector network check
+# 查看磁盘使用情况
+ops-inspector -d usage
 
-# 检查目标 TCP 端口（后续扩展）
-ops-inspector network port
+# 分析目录占用情况
+ops-inspector -d analyze <path> [--top N]
+```
+
+### 进程与网络（尚未实现）
+
+```bash
+# 查看进程列表
+ops-inspector -p list
+
+# 查看网络连接
+ops-inspector -n connections
+
+# 后续计划：ops-inspector -n check|port
 ```
 
 ### 密码生成
 
 ```bash
-# 生成包含大写字母、小写字母和数字的随机密码（长度必须大于 8 且小于 64）
-ops-inspector password generate 16
+# 生成包含大写字母、小写字母和数字的随机密码（长度为 8 到 64 位，含边界）
+ops-inspector -P generate 16
 ```
 
 ### 其他命令
@@ -165,7 +174,7 @@ ops-inspector password generate 16
 ops-inspector version
 
 # 查看命令使用说明
-ops-inspector help
+ops-inspector --help
 ```
 
 上述命令是目标接口设计。尚未实现的命令应在完成开发后再对外提供，不能仅因写入文档就视为可用。

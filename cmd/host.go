@@ -8,13 +8,13 @@ import (
 
 func runHost(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("missing host command: use info or check")
+		return fmt.Errorf("usage: ops-inspector -h info|check")
 	}
 
 	switch args[0] {
 	case "info":
 		if len(args) != 1 {
-			return fmt.Errorf("usage: ops-inspector host info")
+			return fmt.Errorf("usage: ops-inspector -h info")
 		}
 
 		var info host.HostInfo
@@ -28,7 +28,7 @@ func runHost(args []string) error {
 
 	case "check":
 		if len(args) != 1 {
-			return fmt.Errorf("usage: ops-inspector host check")
+			return fmt.Errorf("usage: ops-inspector -h check")
 		}
 
 		disk, err := host.CheckDisk("/")
